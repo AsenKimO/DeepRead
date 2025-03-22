@@ -27,12 +27,3 @@ class VectorDatabase:
 
     def delete_collection(self, collection_name):
         return self.client.drop_collection(collection_name)
-
-    def insert_vectors(self, collection_name, vectors):
-        return self.client.insert(collection_name, vectors)
-
-    def search_vectors(self, collection_name, query_vector, top_k):
-        return self.client.search(collection_name, query_vector, top_k)
-
-    def delete_vectors(self, collection_name, ids):
-        return self.client.delete(collection_name, ids)

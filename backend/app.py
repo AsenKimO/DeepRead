@@ -1,13 +1,14 @@
 from flask import Flask
 from model import EmbeddingModel
-from pymilvus import MilvusClient
+
+# from pymilvus import MilvusClient
 
 # from db import VectorDatabase
 
 app = Flask(__name__)
 model = EmbeddingModel()
 # db = VectorDatabase()
-db = MilvusClient("milvus.db")
+# db = MilvusClient("milvus.db")
 
 
 @app.route("/")
