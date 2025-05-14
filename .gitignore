@@ -3,4 +3,4 @@ backend/venv
 backend/__pycache__
 chrome-frontend/.next
 chrome-frontend/node_modules
-chrome-frontend/out/next
+chrome-frontend/out
