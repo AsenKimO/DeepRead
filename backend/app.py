@@ -16,7 +16,7 @@ from db import VectorDatabase
 # from db import VectorDatabase
 
 # --- Configuration ---
-PDF_PUBLIC_STORAGE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), '.', 'public', 'pdfs')
+PDF_PUBLIC_STORAGE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'public', 'pdfs')
 
 # TODO: setup env file?
 OLLAMA_API_BASE_URL = "http://localhost:11434"
@@ -157,13 +157,16 @@ def process_pdf_endpoint():
     pdf_internal_id = str(uuid.uuid4())
 
     try:
-        parsed_pages_markdown = pdf_parser.parse_page_chunking(pdf_full_path)
+        page_chunks = pdf_parser.parse_page_chunking(pdf_full_path)
         all_sentence_objects = []
-        for page_num_idx, page_md_content in enumerate(parsed_pages_markdown):
-            page_sentences_text = embedding_model.sents_from_text(page_md_content)
+        for page_num_idx, page_chunk in enumerate(page_chunks):
+            # Extract just the text content from the page chunk
+            page_text = page_chunk["text"]
+            # Convert markdown text to sentences
+            page_sentences_text = embedding_model.sents_from_text(page_text)
             for sent_text in page_sentences_text:
                 all_sentence_objects.append({
-                    "id": str(uuid.uuid4()),
+                    "id": int(uuid.uuid4().int & (2**63-1)),
                     "text": sent_text,
                     "page_number": page_num_idx + 1,
                     "pdf_internal_id": pdf_internal_id,
@@ -174,7 +177,17 @@ def process_pdf_endpoint():
             return jsonify({"error": "Could not extract text from PDF."}), 400
 
         sentence_texts_to_embed = [s_obj["text"] for s_obj in all_sentence_objects]
+
+        print("\nHEAD:")
+        for i, text in enumerate(sentence_texts_to_embed[:3]):
+            print(f"{i+1}. {text}")
+        print("\n...")
+        print("\nTAIL:")
+        
+        for i, text in enumerate(sentence_texts_to_embed[-3:]):
+            print(f"{len(sentence_texts_to_embed)-2+i}. {text}")
         embeddings = embedding_model.get_embeddings(sentence_texts_to_embed)
+        print(f"Generated embeddings shape: {embeddings.shape}")  # Shows dimensions of embedding matrix
 
         collection_name = f"pdf_coll_{pdf_internal_id.replace('-', '_')}"
         dimension = embeddings.shape[1]
@@ -184,13 +197,16 @@ def process_pdf_endpoint():
         vector_db.create_collection(collection_name, dimension) # Ensure schema is defined here or in db.py
 
         data_to_insert_into_milvus = [{
-            "milvus_id": s_obj["id"], "embedding": embeddings[i].tolist(),
-            "original_text": s_obj["text"], "page_number": s_obj["page_number"],
+            "id": s_obj["id"],
+            "vector": embeddings[i].tolist(),
+            "original_text": s_obj["text"],
+            "page_number": s_obj["page_number"],
             "pdf_internal_id": s_obj["pdf_internal_id"]
         } for i, s_obj in enumerate(all_sentence_objects)]
 
         insert_result = vector_db.client.insert(collection_name=collection_name, data=data_to_insert_into_milvus)
-        print(f"Milvus insert for {collection_name}: PKs-{insert_result.primary_keys[:3]}..., Count-{insert_result.insert_count}")
+        # print(f"Milvus insert for {collection_name}: PKs-{insert_result.primary_keys[:3]}..., Count-{insert_result.insert_count}")
+        print(f"Milvus insert for {collection_name}: successful")
 
         # ensure Milvus Lite auto-flushes or call flush if needed.
         # vector_db.client.flush([collection_name]) # May be needed for immediate searchability
@@ -255,7 +271,7 @@ def chat_with_pdf_endpoint():
             results = vector_db.client.search(
                 collection_name=collection_name_for_rag,
                 data=[question_embedding],
-                anns_field="embedding", param=search_params, limit=3,
+                anns_field="vector", param=search_params, limit=3,
                 output_fields=["original_text", "page_number"]
             )
             if results and results[0]:
@@ -320,4 +336,4 @@ def embed():
     return embedding_model.get_embeddings(sentences).tolist()
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=8000, debug=True)
+    app.run(host="0.0.0.0", port=8000, debug=True, use_reloader=False)
