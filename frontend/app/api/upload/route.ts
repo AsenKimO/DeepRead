@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import path from "path";
 import { promises as fs } from "fs";
 
-const PDF_DIR = path.join(process.cwd(), "public/pdfs");
+const PDF_DIR = path.join(process.cwd(), "..", "public/pdfs");
 
 export async function POST(req: NextRequest) {
   const data = await req.formData();
