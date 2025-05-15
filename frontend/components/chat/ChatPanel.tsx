@@ -55,7 +55,7 @@ export function ChatPanel({ setChatRef, initialContext }: ChatPanelProps) {
     }
   }, [setChatRef]);
 
-  const addMessage = (content: string) => {
+  const addMessage = async (content: string) => {
     // Add user message
     const userMessage: Message = {
       id: `user-${Date.now()}`,
@@ -66,17 +66,70 @@ export function ChatPanel({ setChatRef, initialContext }: ChatPanelProps) {
 
     setMessages((prev) => [...prev, userMessage]);
 
-    // Simulate assistant response
-    setTimeout(() => {
+    const pdfSessionId = "IKIAG";
+    const collectionNameForRag = "yo_gurt";
+
+    if (!pdfSessionId || !collectionNameForRag) {
+      const errorMessage: Message = {
+        id: `error-${Date.now()}`,
+        role: "assistant",
+        content: "Error: PDF not processed yet. Please select or upload a PDF.",
+        timestamp: new Date(),
+      };
+      setMessages((prev) => [...prev, errorMessage]);
+      return;
+    }
+
+    try {
+      const response = await fetch("http://localhost:8000/api/chat_with_pdf", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          query: content,
+          pdf_session_id: pdfSessionId,
+          collection_name_for_rag: collectionNameForRag,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+
       const assistantMessage: Message = {
         id: `assistant-${Date.now()}`,
         role: "assistant",
-        content: `This is a simulated response to your question: "${content}". In a real implementation, this would be handled by your AI backend.`,
+        content: data.answer,
         timestamp: new Date(),
       };
-
       setMessages((prev) => [...prev, assistantMessage]);
-    }, 1000);
+
+    } catch (error) {
+      console.error("Failed to send message to backend:", error);
+      const errorMessage: Message = {
+        id: `error-${Date.now()}`,
+        role: "assistant",
+        content: `Error communicating with the AI: ${error instanceof Error ? error.message : "Unknown error"}`,
+        timestamp: new Date(),
+      };
+      setMessages((prev) => [...prev, errorMessage]);
+    }
+
+    // Simulate assistant response
+    // setTimeout(() => {
+    //   const assistantMessage: Message = {
+    //     id: `assistant-${Date.now()}`,
+    //     role: "assistant",
+    //     content: `This is a simulated response to your question: "${content}". In a real implementation, this would be handled by your AI backend.`,
+    //     timestamp: new Date(),
+    //   };
+
+    //   setMessages((prev) => [...prev, assistantMessage]);
+    // }, 1000);
   };
 
   return (
