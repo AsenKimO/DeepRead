@@ -1,14 +1,15 @@
 {
   "name": "deepread",
   "version": "0.0.1",
-  "description": "",
+  "description": "AI-powered PDF reader and study assistant",
   "main": "index.js",
   "scripts": {
     "build": "npm run prep",
     "prep": "npm run exp && node out.js",
     "exp": "next build && next export",
     "run": "next start",
-    "dev": "next dev"
+    "dev": "next dev",
+    "extension": "npm run build && node extension-build.js"
   },
   "keywords": [],
   "author": "",

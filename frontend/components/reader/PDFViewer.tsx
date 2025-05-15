@@ -16,9 +16,10 @@ declare global {
 interface PDFViewerProps {
   url: string;
   name: string;
+  onTextSelected?: (text: string) => void;
 }
 
-export function PDFViewer({ url, name }: PDFViewerProps) {
+export function PDFViewer({ url, name, onTextSelected }: PDFViewerProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const [pdf, setPdf] = useState<any>(null);

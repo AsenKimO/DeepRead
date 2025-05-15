@@ -1,17 +1,24 @@
+// components/Index/index.js
 import styles from '../../styles/Pages.module.css';
 
 export default function Index({ navigateToPage }) {
   return (
     <div className={styles.container}>
       <main className={styles.main}>
-        <h1 className={styles.title}>NEXT-CHROME-STARTER</h1>
+        <h1 className={styles.title}>DEEPREAD</h1>
         <p className={styles.description}>
-          This is an example of a Browser Extension built with NEXT.JS. Please
-          refer to the GitHub repo for running instructions and documentation
+          Your AI-powered study assistant for PDFs. 
+          Navigate to any PDF in Chrome and click this extension to open it in DeepRead.
         </p>
-        <h1 className={styles.code}>Index Page ./components/Index/index.js</h1>
-        <p>{"[ - This is Index page content - ]"}</p>
-        <p onClick={() => navigateToPage('new')}>{"Go to New Page >"}</p>
+        <div className={styles.code}>
+          <p>To use DeepRead:</p>
+          <ol style={{ textAlign: 'left', paddingLeft: '20px' }}>
+            <li>Open any PDF in Chrome</li>
+            <li>Click the DeepRead extension icon</li>
+            <li>or Click the "Open in DeepRead" button that appears</li>
+          </ol>
+        </div>
+        <p onClick={() => navigateToPage('new')} style={{ cursor: 'pointer', marginTop: '20px' }}>{"Settings >"}</p>
       </main>
     </div>
   );

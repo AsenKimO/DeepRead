@@ -1,7 +1,6 @@
-// components/chat/ChatPanel.tsx
 "use client";
 
-import { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { MessageList } from "./MessageList";
 import { MessageInput } from "./MessageInput";
 import { Button } from "@/components/ui/button";
@@ -15,7 +14,14 @@ type Message = {
   timestamp: Date;
 };
 
-export function ChatPanel() {
+interface ChatPanelProps {
+  setChatRef?: React.Dispatch<
+    React.SetStateAction<{ addMessageFromText: (text: string) => void } | null>
+  >;
+  initialContext?: string;
+}
+
+export function ChatPanel({ setChatRef, initialContext }: ChatPanelProps) {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
     {
@@ -26,6 +32,28 @@ export function ChatPanel() {
       timestamp: new Date(),
     },
   ]);
+
+  useEffect(() => {
+    if (initialContext) {
+      const initialMessage: Message = {
+        id: `initial-${Date.now()}`,
+        role: "assistant",
+        content: initialContext,
+        timestamp: new Date(),
+      };
+      setMessages((prev) => [...prev, initialMessage]);
+    }
+  }, [initialContext]);
+
+  useEffect(() => {
+    if (setChatRef) {
+      setChatRef({
+        addMessageFromText: (text: string) => {
+          addMessage(text);
+        },
+      });
+    }
+  }, [setChatRef]);
 
   const addMessage = (content: string) => {
     // Add user message
