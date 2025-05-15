@@ -1,24 +1,18 @@
 import pymupdf4llm
-import json
 
 class PdfParser:
     def __init__(self):
-        pass
+        return
 
+    # Good parsing method to feed into LLM directly
     def simple_parse(self, pdf_path):
         output = pymupdf4llm.to_markdown(pdf_path)
         return output
 
+    # Good parsing methods to feed into Embedding Model
+    # Probably should just use embedded images method to simplify
     def parse_page_chunking(self, pdf_path):
         output = pymupdf4llm.to_markdown(pdf_path, page_chunks=True)
-        # output = pymupdf4llm.to_markdown(pdf_path, write_images=True)
-        # output = pymupdf4llm.to_markdown(pdf_path, page_chunks=True, write_images=True)
-
-        # with open('output.json', 'w', encoding='utf-8') as f:
-        #     json.dump(output, f, ensure_ascii=False, indent=4)
-
-        # with open('output.txt', 'w', encoding='utf-8') as f:
-        #     f.write(output)
         return output
 
     def parse_embed_images(self, pdf_path):
@@ -29,6 +23,7 @@ class PdfParser:
         output = pymupdf4llm.to_markdown(pdf_path, write_images=True, image_path=img_path)
         return output
 
-parser = PdfParser()
-output = parser.parse_embed_images("./test.pdf")
-print(output)
+# TESTING
+# parser = PdfParser()
+# output = parser.parse_embed_images("./test.pdf")
+# print(output)
