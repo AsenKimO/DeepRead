@@ -17,11 +17,6 @@ export function Header() {
         </Link>
         <div className="flex items-center gap-4">
           <ModeToggle />
-          <Button asChild variant="outline">
-            <Link href={`/reader?pdfUrl=/pdfs/${pdfName}&pdfName=${pdfName}`}>
-              Open Reader
-            </Link>
-          </Button>
         </div>
       </div>
     </header>
