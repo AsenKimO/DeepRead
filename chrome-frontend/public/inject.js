@@ -3,7 +3,8 @@ console.log("DeepRead PDF Assistant loaded");
 
 // Check if we're on a PDF page
 const isPdfPage = document.contentType === 'application/pdf' || 
-                 window.location.href.toLowerCase().includes('.pdf') ||
+                 window.location.href.toLowerCase().includes('.pdf') 
+                 && window.location.href.startsWith('file') ||
                  window.location.href.includes('google.com/viewer');
 
 if (isPdfPage) {

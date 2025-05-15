@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { BookOpen } from "lucide-react";
 
 export function Header() {
+  const pdfName = "sample.pdf"; // Assuming there's a sample.pdf in public/pdfs
   return (
     <header className="border-b">
       <div className="container flex items-center justify-between h-16 mx-auto">
@@ -17,7 +18,7 @@ export function Header() {
         <div className="flex items-center gap-4">
           <ModeToggle />
           <Button asChild variant="outline">
-            <Link href="/reader">Open Reader</Link>
+            <Link href={`/reader?pdfUrl=/pdfs/${pdfName}&pdfName=${pdfName}`}>Open Reader</Link>
           </Button>
         </div>
       </div>

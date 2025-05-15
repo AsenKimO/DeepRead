@@ -1,4 +1,3 @@
-// app/reader/page.tsx (from earlier implementation)
 "use client";
 
 import { useEffect, useState } from "react";
@@ -99,9 +98,7 @@ export default function ReaderPage() {
         />
       </div>
       <div className="w-[30%] border-l">
-        <ChatPanel
-          setChatRef={setChatRef}
-        />
+        <ChatPanel setChatRef={setChatRef} />
       </div>
     </div>
   );

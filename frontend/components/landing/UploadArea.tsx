@@ -55,18 +55,34 @@ export function UploadArea() {
     }
   };
 
-  const handleUpload = () => {
-    if (file) {
-      // In a real implementation, you'd upload the file to your server
-      // For now, we'll just simulate by storing in localStorage and redirecting
-      localStorage.setItem("currentPdfName", file.name);
+  const handleUpload = async () => {
+    if (!file) return;
 
-      // Create a URL for the file
-      const fileURL = URL.createObjectURL(file);
-      localStorage.setItem("currentPdfUrl", fileURL);
+    const formData = new FormData();
+    formData.append("file", file);
 
+    try {
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!res.ok) {
+        toast.error("Upload failed");
+        return;
+      }
+
+      const { url } = await res.json();
       toast.success("PDF uploaded successfully!");
-      router.push("/reader");
+
+      router.push(
+        `/reader?pdfUrl=${encodeURIComponent(url)}&pdfName=${encodeURIComponent(
+          file.name
+        )}`
+      );
+    } catch (err) {
+      toast.error("Something went wrong – check your connection.");
+      console.error(err);
     }
   };
 
