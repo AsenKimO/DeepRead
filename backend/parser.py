@@ -11,6 +11,7 @@ class PdfParser:
 
     # Good parsing methods to feed into Embedding Model
     # Probably should just use embedded images method to simplify
+    # Page chunking should be better for LLM context (Can point to specific area in pdf that is relevent)
     def parse_page_chunking(self, pdf_path):
         output = pymupdf4llm.to_markdown(pdf_path, page_chunks=True)
         return output
