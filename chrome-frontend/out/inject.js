@@ -28,17 +28,24 @@ if (isPdfPage) {
       Open in DeepRead
     </div>
   `;
+  const innerDiv = button.firstElementChild; // grabs the element that has the gradient bg
   
   document.body.appendChild(button);
   
   // When the button is clicked, open our reader
-  button.addEventListener('click', () => {
+  button.addEventListener("click", () => {
+    // visual feedback
+    innerDiv.textContent = "Loading…";
+    innerDiv.style.cursor = "wait";
+    innerDiv.style.opacity = "0.8";
+    innerDiv.style.pointerEvents = "none"; // prevent double‑clicks
+
     const pdfUrl = window.location.href;
-    
-    // Use chrome.runtime.sendMessage to communicate with the background script
-    chrome.runtime.sendMessage({ 
-      action: "openInReader", 
-      pdfUrl: pdfUrl 
+
+    // send message to background script
+    chrome.runtime.sendMessage({
+      action: "openInReader",
+      pdfUrl: pdfUrl,
     });
   });
 }
