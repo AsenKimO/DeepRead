@@ -1,5 +1,6 @@
 from flask import Flask
-from backend.models.model import EmbeddingModel
+from model import EmbeddingModel
+from parser import PdfParser
 
 # from pymilvus import MilvusClient
 
@@ -7,15 +8,23 @@ from backend.models.model import EmbeddingModel
 
 app = Flask(__name__)
 model = EmbeddingModel()
+parser = PdfParser()
 # db = VectorDatabase()
 # db = MilvusClient("milvus.db")
 
 
 @app.route("/")
 def embed():
-    sentence = "This is an example sentence"
-    print(len(model.get_embeddings(sentence)))  # to create collection
-    return model.get_embeddings(sentence).tolist()
+    # sentence = "This is an example sentence"
+    pdf_path = "pdftest/test.pdf"
+    raw_text = parser.simple_parse(pdf_path)
+    sentences = model.sents_from_text(raw_text)
+    for sent in sentences:
+        print(sent)
+        print("----------------------------------------------")
+    embeddings = model.get_embeddings(sentences)
+    print(len(embeddings))  # to create collection
+    return model.get_embeddings(sentences).tolist()
 
 
 if __name__ == "__main__":

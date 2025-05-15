@@ -1,25 +1,30 @@
 from sentence_transformers import SentenceTransformer
-from nltk.tokenize import PunktSentenceTokenizer
+from nltk.tokenize import PunktTokenizer
+import nltk
 import re
 
 class EmbeddingModel:
     def __init__(self):
         self.model = SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2")
-        self.tokenizer = PunktSentenceTokenizer()
+        nltk.download('punkt_tab')
+        self.tokenizer = PunktTokenizer()
         return
     
-    def _clean_text(self, text: str) -> str:
+    def _clean_text(self, text):
+        text = text.replace('ﬁ', 'fi')
+        text = text.replace('ﬂ', 'fl')
+        text = text.replace('fifi', 'fi')
+        text = text.replace('flfl', 'fl')
         text = re.sub(r'([a-zA-Z]+)-\n([a-zA-Z]+)', r'\1\2', text)
         text = text.replace('\n', ' ')
         text = ' '.join(text.split())
-        text = text.replace('fifi', 'fi')
         return text
 
-    def tokenize(self, text):
+    def sents_from_text(self, text):
         cleaned_text = self._clean_text(text)
-        print(cleaned_text)
-        print("----------------------------------------------")
-        sentences = self.tokenizer.sentences_from_text(cleaned_text)
+        # print(cleaned_text)
+        # print("----------------------------------------------")
+        sentences = self.tokenizer.tokenize(cleaned_text)
         sentences = [s.strip() for s in sentences if s.strip()]
         return sentences
 
@@ -35,7 +40,7 @@ class EmbeddingModel:
 # """
 
 # model = EmbeddingModel()
-# sentences = model.tokenize(raw_pdf_text)
+# sentences = model.sents_from_text(raw_pdf_text)
 # for sent in sentences:
 #     print(sent)
 #     print("----------------------------------------------")
