@@ -1,5 +1,5 @@
 from flask import Flask
-from model import EmbeddingModel
+from backend.models.model import EmbeddingModel
 
 # from pymilvus import MilvusClient
 
