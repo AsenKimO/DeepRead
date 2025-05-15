@@ -1,7 +1,13 @@
 // components/reader/NavigationControls.tsx
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
-import { ChevronLeft, ChevronRight, ZoomIn, ZoomOut } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  ZoomIn,
+  ZoomOut,
+  RotateCw,
+} from "lucide-react";
 
 interface NavigationControlsProps {
   currentPage: number;
@@ -10,6 +16,7 @@ interface NavigationControlsProps {
   onPreviousPage: () => void;
   onNextPage: () => void;
   onZoomChange: (scale: number) => void;
+  onRotate: () => void;
 }
 
 export function NavigationControls({
@@ -19,6 +26,7 @@ export function NavigationControls({
   onPreviousPage,
   onNextPage,
   onZoomChange,
+  onRotate,
 }: NavigationControlsProps) {
   const zoomIn = () => {
     onZoomChange(Math.min(scale + 0.2, 3));
@@ -84,6 +92,10 @@ export function NavigationControls({
           disabled={scale >= 3}
         >
           <ZoomIn className="h-4 w-4" />
+        </Button>
+
+        <Button variant="outline" size="icon" onClick={onRotate}>
+          <RotateCw className="h-4 w-4" />
         </Button>
 
         <span className="text-xs text-muted-foreground ml-1">

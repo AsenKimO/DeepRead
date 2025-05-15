@@ -20,10 +20,13 @@ interface PDFViewerProps {
 
 export function PDFViewer({ url, name }: PDFViewerProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const wrapperRef = useRef<HTMLDivElement>(null);
   const [pdf, setPdf] = useState<any>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
   const [scale, setScale] = useState(1.2);
+  const [rotation, setRotation] = useState(0);
+  const rotateCW = () => setRotation((prev) => (prev + 90) % 360);
   const [isScriptLoaded, setIsScriptLoaded] = useState(false);
 
   // In case the PDF.js script loads *before* this component hydrates,
@@ -53,7 +56,9 @@ export function PDFViewer({ url, name }: PDFViewerProps) {
         if (url.startsWith("blob:")) {
           const response = await fetch(url);
           const arrayBuffer = await response.arrayBuffer();
-          loadingTask = pdfjsLib.getDocument({ data: new Uint8Array(arrayBuffer) });
+          loadingTask = pdfjsLib.getDocument({
+            data: new Uint8Array(arrayBuffer),
+          });
         } else {
           loadingTask = pdfjsLib.getDocument(url);
         }
@@ -77,34 +82,58 @@ export function PDFViewer({ url, name }: PDFViewerProps) {
     };
   }, [url, isScriptLoaded]);
 
+  // Render the current page whenever `pdf`, `currentPage`, or `scale` changes
   useEffect(() => {
     if (!isScriptLoaded || !pdf || !canvasRef.current) return;
+
+    // Keep a reference to the current render task so we can cancel it
+    let renderTask: any;
 
     const renderPage = async () => {
       try {
         const page = await pdf.getPage(currentPage);
         const viewport = page.getViewport({ scale });
 
-        const canvas = canvasRef.current;
-        if (!canvas) return;
-
+        const canvas = canvasRef.current!;
         const context = canvas.getContext("2d");
         if (!context) return;
 
-        canvas.height = viewport.height;
+        // Set canvas dimensions to match the viewport
         canvas.width = viewport.width;
+        canvas.height = viewport.height;
+        // Size the wrapper to the scaled dimensions so scrollbars cover the zoomed area
+        if (wrapperRef.current) {
+          wrapperRef.current.style.width = `${viewport.width * scale}px`;
+          wrapperRef.current.style.height = `${viewport.height * scale}px`;
+        }
+        // Apply transform-based zoom without changing container size
+        canvas.style.transformOrigin = "center center";
+        canvas.style.transform = `rotate(${rotation}deg)`;
 
-        await page.render({
-          canvasContext: context,
-          viewport,
-        }).promise;
-      } catch (error) {
-        console.error("Error rendering page:", error);
+        // Cancel any in‑flight render before starting a new one
+        if (renderTask && renderTask.cancel) {
+          renderTask.cancel();
+        }
+
+        renderTask = page.render({ canvasContext: context, viewport });
+        await renderTask.promise;
+      } catch (error: any) {
+        // Ignore "RenderingCancelledException" — that just means we re‑rendered quickly
+        if (error?.name !== "RenderingCancelledException") {
+          console.error("Error rendering page:", error);
+        }
       }
     };
 
     renderPage();
-  }, [pdf, currentPage, scale, isScriptLoaded]);
+
+    // Cleanup: cancel the render task if the effect re‑runs or unmounts
+    return () => {
+      if (renderTask && renderTask.cancel) {
+        renderTask.cancel();
+      }
+    };
+  }, [pdf, currentPage, scale, isScriptLoaded, rotation]);
 
   const goToNextPage = () => {
     if (currentPage < totalPages) {
@@ -139,8 +168,8 @@ export function PDFViewer({ url, name }: PDFViewerProps) {
         strategy="afterInteractive"
       />
 
-      <div className="flex flex-col h-full">
-        <div className="p-4 border-b flex justify-between items-center">
+      <div className="flex flex-col h-full w-full overflow-hidden">
+        <div className="sticky top-0 z-10 w-full p-4 border-b flex justify-between items-center">
           <h1 className="font-medium truncate max-w-[20rem]" title={name}>
             {name}
           </h1>
@@ -150,17 +179,24 @@ export function PDFViewer({ url, name }: PDFViewerProps) {
             scale={scale}
             onPreviousPage={goToPreviousPage}
             onNextPage={goToNextPage}
-            onZoomChange={changeZoom}
+            onZoomChange={(s) => {
+              changeZoom(s);
+              // scroll back to top-left so the user can see the now-larger page
+              document.querySelector(".overflow-auto")?.scrollTo({ top: 0, left: 0 });
+            }}
+            onRotate={rotateCW}
           />
         </div>
 
-        <div className="flex-1 overflow-auto flex justify-center p-4 bg-muted/20">
+        <div className="flex-1 min-h-0 w-full overflow-auto flex justify-start items-start p-4 bg-muted/20">
           {!isScriptLoaded ? (
             <div className="flex items-center justify-center">
               Loading PDF.js...
             </div>
           ) : (
-            <canvas ref={canvasRef} className="shadow-lg" />
+            <div ref={wrapperRef} className="inline-block shadow-lg">
+              <canvas ref={canvasRef} />
+            </div>
           )}
         </div>
 
