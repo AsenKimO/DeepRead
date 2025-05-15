@@ -1,4 +1,3 @@
-// components/landing/UploadArea.tsx
 "use client";
 
 import { useState } from "react";
@@ -13,12 +12,13 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { FileUp, Upload } from "lucide-react";
+import { FileUp, Upload, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export function UploadArea() {
   const [isDragging, setIsDragging] = useState(false);
   const [file, setFile] = useState<File | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
   const router = useRouter();
 
   const handleDragOver = (e: React.DragEvent) => {
@@ -58,6 +58,9 @@ export function UploadArea() {
   const handleUpload = async () => {
     if (!file) return;
 
+    setIsUploading(true);
+    console.log("Uploading file:", file.name);
+
     const formData = new FormData();
     formData.append("file", file);
 
@@ -69,6 +72,7 @@ export function UploadArea() {
 
       if (!res.ok) {
         toast.error("Upload failed");
+        setIsUploading(false);
         return;
       }
 
@@ -83,6 +87,9 @@ export function UploadArea() {
     } catch (err) {
       toast.error("Something went wrong – check your connection.");
       console.error(err);
+      setIsUploading(false);
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -144,9 +151,19 @@ export function UploadArea() {
           </div>
         </CardContent>
         <CardFooter>
-          <Button onClick={handleUpload} disabled={!file} className="w-full">
-            Open in Reader
-          </Button>
+          {isUploading ? (
+            <Button
+              disabled
+              className="w-full flex items-center justify-center gap-2"
+            >
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Uploading...
+            </Button>
+          ) : (
+            <Button onClick={handleUpload} disabled={!file} className="w-full">
+              Open in Reader
+            </Button>
+          )}
         </CardFooter>
       </Card>
     </section>

@@ -20,7 +20,7 @@ export async function POST(req: NextRequest) {
   // Write the new PDF
   const bytes = await file.arrayBuffer();
   const filename = file.name.replace(/[^a-zA-Z0-9_.-]/g, "_"); // sanitize
-  console.log('Processing file:', filename);
+  console.log("Processing file:", filename);
   const dest = path.join(PDF_DIR, filename);
   await fs.writeFile(dest, Buffer.from(bytes));
 
@@ -28,29 +28,32 @@ export async function POST(req: NextRequest) {
   const publicUrl = `/pdfs/${filename}`;
 
   // Make a POST request to backend to parse pdf
-  const response = await fetch('http://localhost:8000/api/process_pdf', {
-    method: 'POST',
+  const response = await fetch("http://localhost:8000/api/process_pdf", {
+    method: "POST",
     headers: {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      filename: filename
-    })
+      filename: filename,
+    }),
   });
 
   if (!response.ok) {
     const error = await response.text();
-    console.log(`PDF processing failed: ${error}`)
-    return NextResponse.json({ error: `PDF processing failed: ${error}` }, { status: 500 });
+    console.log(`PDF processing failed: ${error}`);
+    return NextResponse.json(
+      { error: `PDF processing failed: ${error}` },
+      { status: 500 }
+    );
   }
 
   const result = await response.json();
-  console.log('PDF processed successfully:', {
+  console.log("PDF processed successfully:", {
     message: result.message,
     pdfInternalId: result.pdf_internal_id,
     originalFilename: result.original_filename,
     collectionName: result.collection_name_for_rag,
-    pdfSessionId: result.pdf_session_id
+    pdfSessionId: result.pdf_session_id,
   });
 
   return NextResponse.json({ url: publicUrl });
