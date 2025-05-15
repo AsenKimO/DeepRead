@@ -7,18 +7,15 @@ export default function Index({ navigateToPage }) {
       <main className={styles.main}>
         <h1 className={styles.title}>DEEPREAD</h1>
         <p className={styles.description}>
-          Your AI-powered study assistant for PDFs. 
-          Navigate to any PDF in Chrome and click this extension to open it in DeepRead.
+          Your AI-powered study assistant for PDFs. To use DeepRead:
         </p>
-        <div className={styles.code}>
-          <p>To use DeepRead:</p>
+        <div className={styles.description}>
+          <p></p>
           <ol style={{ textAlign: 'left', paddingLeft: '20px' }}>
             <li>Open any PDF in Chrome</li>
-            <li>Click the DeepRead extension icon</li>
-            <li>or Click the "Open in DeepRead" button that appears</li>
+            <li>Click the "Open in DeepRead" button that appears</li>
           </ol>
         </div>
-        <p onClick={() => navigateToPage('new')} style={{ cursor: 'pointer', marginTop: '20px' }}>{"Settings >"}</p>
       </main>
     </div>
   );

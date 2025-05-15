@@ -36,7 +36,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       // Store the PDF URL
       chrome.storage.local.set({ currentPdfUrl: message.pdfUrl }, () => {
         // Open the reader page
-        chrome.tabs.create({ url: "http://localhost:3000/reader" });
+        chrome.tabs.create({ url: "http://localhost:3000/reader?pdfUrl=/pdfs/Swift-Laputa.pdf&pdfName=Swift-Laputa.pdf" });
       });
     }
   });

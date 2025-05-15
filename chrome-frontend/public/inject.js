@@ -13,7 +13,7 @@ if (isPdfPage) {
   button.innerHTML = `
     <div style="
       position: fixed;
-      top: 20px;
+      top: 10px;
       right: 20px;
       background: linear-gradient(153deg, rgb(116, 56, 216), rgb(18, 150, 170) 74%);
       color: white;
