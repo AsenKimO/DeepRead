@@ -25,5 +25,17 @@ export async function POST(req: NextRequest) {
 
   // Return the public URL so the client can load it
   const publicUrl = `/pdfs/${filename}`;
+
+  // Make a POST request to backend to parse pdf
+  await fetch('http://localhost:8000/api/process_pdf', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      filename: filename
+    })
+  });
+
   return NextResponse.json({ url: publicUrl });
 }

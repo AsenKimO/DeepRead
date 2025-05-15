@@ -13,15 +13,14 @@ from parser import PdfParser
 from db import VectorDatabase
 
 # from pymilvus import MilvusClient
-
 # from db import VectorDatabase
 
 # --- Configuration ---
-PDF_PUBLIC_STORAGE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'public', 'pdfs')
+PDF_PUBLIC_STORAGE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), '.', 'public', 'pdfs')
 
 # TODO: setup env file?
-OLLAMA_API_BASE_URL = os.environ.get("OLLAMA_API_BASE_URL", "http://localhost:11434")
-OLLAMA_MODEL_NAME = os.environ.get("OLLAMA_MODEL_NAME", "mistral")
+OLLAMA_API_BASE_URL = "http://localhost:11434"
+OLLAMA_MODEL_NAME = "llama3.2:1b"
 
 MAX_CHAT_HISTORY_TURNS = 5 # Reduced for shorter context to Ollama, adjust as needed
 SESSION_TIMEOUT_MINUTES = 60
@@ -35,7 +34,6 @@ app = Flask(__name__)
 
 CORS(app, supports_credentials=True)
 
-app.config['PDF_PUBLIC_STORAGE_DIR'] = PDF_PUBLIC_STORAGE_DIR
 app.secret_key = "your_very_secret_key_for_dev_ollama" # Replace in production
 app.permanent_session_lifetime = datetime.timedelta(minutes=SESSION_TIMEOUT_MINUTES)
 
@@ -75,7 +73,6 @@ def get_llm_response(prompt_with_context, chat_history_for_llm, model_name=OLLAM
         "model": model_name,
         "messages": messages_payload,
         "stream": False  # Set to False to get the full response at once
-        # You can add other Ollama parameters here, e.g., "options": {"temperature": 0.7}
     }
 
     print(f"\n--- Sending to Ollama ({model_name} at {ollama_api_url}) ---")
@@ -89,7 +86,7 @@ def get_llm_response(prompt_with_context, chat_history_for_llm, model_name=OLLAM
         
         # The structure of the response from /api/chat when stream=False
         # is typically like: {"model": "...", "created_at": "...", "message": {"role": "assistant", "content": "..."}}
-        if response_data and "message" in response_data and "content" in response_data["message"]:
+        if response_data and ("message" in response_data) and ("content" in response_data["message"]):
             llm_text_response = response_data["message"]["content"]
             print(f"--- Ollama Response ---\n{llm_text_response}\n-----------------------\n")
             return llm_text_response
@@ -104,7 +101,6 @@ def get_llm_response(prompt_with_context, chat_history_for_llm, model_name=OLLAM
         print(f"Error decoding Ollama JSON response: {e}")
         print(f"Raw response: {response.text}")
         return "Error: Invalid JSON response from Ollama."
-
 
 def get_pdf_session_chat_history(pdf_session_id):
     return flask_session.get(f"chat_history_{pdf_session_id}", [])
@@ -131,6 +127,21 @@ def clear_pdf_session_chat_history(pdf_session_id):
 # --- API Endpoints ---
 @app.route("/api/process_pdf", methods=["POST"])
 def process_pdf_endpoint():
+    """
+    POST
+    {
+        "filename": filename
+    }
+
+    Response
+    {
+        "message": "PDF processed and ready for chat.",
+        "pdf_internal_id": pdf_internal_id,
+        "original_filename": safe_pdf_filename,
+        "collection_name_for_rag": collection_name,
+        "pdf_session_id": pdf_session_id
+    }
+    """
     data = request.get_json()
     pdf_filename = data.get("filename")
 
@@ -138,7 +149,7 @@ def process_pdf_endpoint():
         return jsonify({"error": "No filename provided"}), 400
 
     safe_pdf_filename = secure_filename(pdf_filename)
-    pdf_full_path = os.path.join(current_app.config['PDF_PUBLIC_STORAGE_DIR'], safe_pdf_filename)
+    pdf_full_path = os.path.join(PDF_PUBLIC_STORAGE_DIR, safe_pdf_filename)
 
     if not os.path.exists(pdf_full_path):
         return jsonify({"error": f"PDF file '{safe_pdf_filename}' not found at {pdf_full_path}."}), 404
@@ -203,13 +214,28 @@ def process_pdf_endpoint():
 
 @app.route("/api/chat_with_pdf", methods=["POST"])
 def chat_with_pdf_endpoint():
+    """
+    POST
+    {
+        "query" = query
+        "pdf_session_id" = pdf_session_id
+        "collection_name_for_rag" = collection_name_for_rag
+    }
+
+    Response
+    {
+        "answer": llm_answer,
+        "pdf_session_id": pdf_session_id,
+        "retrieved_context_for_debug": retrieved_context_texts
+    }
+    """
     data = request.get_json()
-    user_question = data.get("question")
+    user_question = data.get("query")
     pdf_session_id = data.get("pdf_session_id")
     collection_name_for_rag = data.get("collection_name_for_rag")
 
     if not all([user_question, pdf_session_id, collection_name_for_rag]):
-        return jsonify({"error": "Missing question, pdf_session_id, or collection_name_for_rag"}), 400
+        return jsonify({"error": "Missing query, pdf_session_id, or collection_name_for_rag"}), 400
 
     # Important: Ollama's /api/chat expects history as a list of {"role": "...", "content": "..."}
     # The history should reflect the conversation turns.
@@ -218,7 +244,6 @@ def chat_with_pdf_endpoint():
     # Add current user question to history *after* retrieving for LLM context
     # The add_to_pdf_session_chat_history will handle the role and content
     add_to_pdf_session_chat_history(pdf_session_id, "user", user_question)
-
 
     question_embedding = embedding_model.get_embeddings([user_question])[0].tolist()
     retrieved_context_texts = []
