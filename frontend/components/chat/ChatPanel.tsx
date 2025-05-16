@@ -108,6 +108,9 @@ export function ChatPanel({ setChatRef, initialContext }: ChatPanelProps) {
       };
       setMessages((prev) => [...prev, assistantMessage]);
 
+      // TTS
+      
+
     } catch (error) {
       console.error("Failed to send message to backend:", error);
       const errorMessage: Message = {

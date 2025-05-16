@@ -16,6 +16,13 @@ interface MessageItemProps {
 export function MessageItem({ message }: MessageItemProps) {
   const isAssistant = message.role === "assistant";
 
+  const tts = (text: string) => {
+    if ('speechSynthesis' in window) {
+      const utterance = new SpeechSynthesisUtterance(text);
+      window.speechSynthesis.speak(utterance);
+    }
+  };
+
   return (
     <div
       className={cn(
@@ -43,12 +50,17 @@ export function MessageItem({ message }: MessageItemProps) {
         )}
       >
         <p>{message.content}</p>
-        <p className="text-xs opacity-70 mt-1">
-          {message.timestamp.toLocaleTimeString([], {
-            hour: "2-digit",
-            minute: "2-digit",
-          })}
-        </p>
+        <div className="flex items-center justify-between mt-1">
+          <span className="text-xs opacity-70">
+            {message.timestamp.toLocaleTimeString([], {
+              hour: "2-digit",
+              minute: "2-digit",
+            })}
+          </span>
+            <span className="text-sm cursor-pointer hover:opacity-70" onClick={() => tts(message.content)}>
+            🔈
+            </span>
+        </div>
       </div>
     </div>
   );
