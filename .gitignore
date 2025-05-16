@@ -9,3 +9,4 @@ chrome-frontend/out
 /public/pdfs
 venv/
 *.DS_Store
+/node_modules

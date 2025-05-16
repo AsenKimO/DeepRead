@@ -19,7 +19,9 @@ export async function POST(req: NextRequest) {
 
   // Write the new PDF
   const bytes = await file.arrayBuffer();
-  const filename = file.name.replace(/[^a-zA-Z0-9_.-]/g, "_"); // sanitize
+  const filename = file.name
+    .replace(/[^a-zA-Z0-9_.-]/g, "_")
+    .replace(/\s+/g, "_"); // sanitize
   console.log("Processing file:", filename);
   const dest = path.join(PDF_DIR, filename);
   await fs.writeFile(dest, Buffer.from(bytes));

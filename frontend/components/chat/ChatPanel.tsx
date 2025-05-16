@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { MessageList } from "./MessageList";
 import { MessageInput } from "./MessageInput";
 import { Button } from "@/components/ui/button";
@@ -33,6 +33,16 @@ export function ChatPanel({ setChatRef, initialContext }: ChatPanelProps) {
     },
   ]);
 
+  // Ref to keep track of the bottom of the chat for auto‑scrolling
+  const messagesEndRef = useRef<HTMLDivElement | null>(null);
+
+  // Auto‑scroll to the newest message whenever the message list updates
+  useEffect(() => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [messages]);
+
   useEffect(() => {
     if (initialContext) {
       const initialMessage: Message = {
@@ -64,19 +74,34 @@ export function ChatPanel({ setChatRef, initialContext }: ChatPanelProps) {
       timestamp: new Date(),
     };
 
-    setMessages((prev) => [...prev, userMessage]);
+    // Placeholder assistant message shown while we wait for the backend
+    const loadingMessageId = `loading-${Date.now()}`;
+    const loadingMessage: Message = {
+      id: loadingMessageId,
+      role: "assistant",
+      content: "loading...",
+      timestamp: new Date(),
+    };
+
+    // Display both messages immediately
+    setMessages((prev) => [...prev, userMessage, loadingMessage]);
 
     const pdfSessionId = "IKIAG";
     const collectionNameForRag = "yo_gurt";
 
+    // Abort early if prerequisites are missing
     if (!pdfSessionId || !collectionNameForRag) {
-      const errorMessage: Message = {
-        id: `error-${Date.now()}`,
-        role: "assistant",
-        content: "Error: PDF not processed yet. Please select or upload a PDF.",
-        timestamp: new Date(),
-      };
-      setMessages((prev) => [...prev, errorMessage]);
+      setMessages((prev) =>
+        prev.map((msg) =>
+          msg.id === loadingMessageId
+            ? {
+                ...msg,
+                content:
+                  "Error: PDF not processed yet. Please select or upload a PDF.",
+              }
+            : msg
+        )
+      );
       return;
     }
 
@@ -89,50 +114,45 @@ export function ChatPanel({ setChatRef, initialContext }: ChatPanelProps) {
         body: JSON.stringify({
           query: content,
           pdf_session_id: pdfSessionId,
-          collection_name_for_rag: collectionNameForRag
+          collection_name_for_rag: collectionNameForRag,
         }),
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+        throw new Error(
+          errorData.error || `HTTP error! status: ${response.status}`
+        );
       }
 
       const data = await response.json();
 
-      const assistantMessage: Message = {
-        id: `assistant-${Date.now()}`,
-        role: "assistant",
-        content: data.answer,
-        timestamp: new Date(),
-      };
-      setMessages((prev) => [...prev, assistantMessage]);
-
-      // TTS
-      
-
+      // Replace the loading text with the actual assistant response
+      setMessages((prev) =>
+        prev.map((msg) =>
+          msg.id === loadingMessageId
+            ? {
+                ...msg,
+                content: data.answer,
+              }
+            : msg
+        )
+      );
     } catch (error) {
       console.error("Failed to send message to backend:", error);
-      const errorMessage: Message = {
-        id: `error-${Date.now()}`,
-        role: "assistant",
-        content: `Error communicating with the AI: ${error instanceof Error ? error.message : "Unknown error"}`,
-        timestamp: new Date(),
-      };
-      setMessages((prev) => [...prev, errorMessage]);
+      setMessages((prev) =>
+        prev.map((msg) =>
+          msg.id === loadingMessageId
+            ? {
+                ...msg,
+                content: `Error communicating with the AI: ${
+                  error instanceof Error ? error.message : "Unknown error"
+                }`,
+              }
+            : msg
+        )
+      );
     }
-
-    // Simulate assistant response
-    // setTimeout(() => {
-    //   const assistantMessage: Message = {
-    //     id: `assistant-${Date.now()}`,
-    //     role: "assistant",
-    //     content: `This is a simulated response to your question: "${content}". In a real implementation, this would be handled by your AI backend.`,
-    //     timestamp: new Date(),
-    //   };
-
-    //   setMessages((prev) => [...prev, assistantMessage]);
-    // }, 1000);
   };
 
   return (
@@ -162,6 +182,7 @@ export function ChatPanel({ setChatRef, initialContext }: ChatPanelProps) {
         <>
           <div className="flex-1 overflow-auto p-4">
             <MessageList messages={messages} />
+            <div ref={messagesEndRef} />
           </div>
           <div className="p-4 border-t">
             <MessageInput onSendMessage={addMessage} />
