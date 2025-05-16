@@ -8,3 +8,4 @@ chrome-frontend/node_modules
 chrome-frontend/out
 /public/pdfs
 venv/
+*.DS_Store
