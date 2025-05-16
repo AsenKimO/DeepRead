@@ -2,6 +2,7 @@ frontend/node_modules
 backend/venv
 backend/__pycache__
 backend/milvus.db
+backend/.milvus.db.lock
 chrome-frontend/.next
 chrome-frontend/node_modules
 chrome-frontend/out
