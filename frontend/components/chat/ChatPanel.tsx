@@ -89,7 +89,7 @@ export function ChatPanel({ setChatRef, initialContext }: ChatPanelProps) {
         body: JSON.stringify({
           query: content,
           pdf_session_id: pdfSessionId,
-          collection_name_for_rag: collectionNameForRag,
+          collection_name_for_rag: collectionNameForRag
         }),
       });
 
