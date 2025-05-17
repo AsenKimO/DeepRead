@@ -130,9 +130,7 @@ def process_pdf_endpoint():
         page_chunks = pdf_parser.parse_page_chunking(pdf_full_path)
         all_sentence_objects = []
         for page_num_idx, page_chunk in enumerate(page_chunks):
-            # Extract just the text content from the page chunk
             page_text = page_chunk["text"]
-            # Convert markdown text to sentences
             page_sentences_text = embedding_model.sents_from_text(page_text)
             for sent_text in page_sentences_text:
                 all_sentence_objects.append(
